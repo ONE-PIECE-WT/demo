@@ -1,0 +1,5 @@
+{
+  "appId": "com.example.alipay",
+  "appName": "支付宝Demo",
+  "webDir": "dist"
+}
