@@ -35,5 +35,6 @@ import PromotionCards from '../components/PromotionCards.vue';
   width: 100%;
   max-width: 100%;
   /* Padding is handled by individual components or PromotionCards */
+  padding-bottom: 80px; /* 导航栏高度(约50px) + 30px */
 }
 </style>

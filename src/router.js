@@ -5,6 +5,8 @@ import Home from './views/Home.vue';
 import My from './views/My.vue';
 import MessagePage from './views/MessagePage.vue';
 import PaymentPage from './views/PaymentPage.vue';
+import BankCardPage from './views/BankCardPage.vue';
+import AddBankCardPage from './views/AddBankCardPage.vue';
 
 
 const routes = [
@@ -20,7 +22,8 @@ const routes = [
   { path: '/message', component: MessagePage },
   { path: '/scan', component: () => import('./views/ScanPage.vue') },
   { path: '/payment', component: PaymentPage },
-  
+  { path: '/bankcard', component: BankCardPage },
+  { path: '/addbankcard', component: AddBankCardPage },
 ];
 
 const router = createRouter({

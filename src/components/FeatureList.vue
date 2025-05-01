@@ -74,7 +74,7 @@
       </div>
     </div>
 
-    <div class="list-item">
+    <router-link to="/bankcard" class="list-item">
       <div class="item-left">
         <i class="icon icon-bank-card orange">💳</i>
         <span>银行卡</span>
@@ -82,7 +82,7 @@
       <div class="item-right">
         <i class="icon icon-arrow">›</i>
       </div>
-    </div>
+    </router-link>
 
     <div class="list-item">
       <div class="item-left">
@@ -140,6 +140,8 @@
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  text-decoration: none;
+  color: inherit;
 }
 
 .item-left {

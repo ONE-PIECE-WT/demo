@@ -30,6 +30,7 @@ import FeatureList from '../components/FeatureList.vue';
   overflow-y: auto;
   overflow-x: hidden; /* 防止水平滚动 */
   padding: 10px;
+  padding-bottom: 80px; /* 导航栏高度(约50px) + 30px */
   width: 100%;
   max-width: 100%;
 }

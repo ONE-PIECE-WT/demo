@@ -203,6 +203,7 @@
   flex: 1;
   overflow-y: auto;
   background-color: white;
+  padding-bottom: 80px; /* 导航栏高度(约50px) + 30px */
 }
 
 .message-item {
