@@ -4,7 +4,7 @@
       <i class="icon icon-scan">📷</i>
       <span>扫一扫</span>
     </div>
-    <div class="action-item">
+    <div class="action-item" @click="goToPayment">
       <i class="icon icon-payment">💰</i>
       <span>收付款</span>
     </div>
@@ -27,6 +27,11 @@ import { ref } from 'vue';
 
 const router = useRouter();
 const scanResult = ref('');
+
+// 跳转到收付款页面
+const goToPayment = () => {
+  router.push('/payment');
+};
 
 // 检查相机权限
 const checkCameraPermission = async () => {
