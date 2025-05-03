@@ -7,3 +7,6 @@ project(':capacitor-mlkit-barcode-scanning').projectDir = new File('../node_modu
 
 include ':capacitor-camera'
 project(':capacitor-camera').projectDir = new File('../node_modules/@capacitor/camera/android')
+
+include ':exxili-capacitor-nfc'
+project(':exxili-capacitor-nfc').projectDir = new File('../node_modules/@exxili/capacitor-nfc/android')

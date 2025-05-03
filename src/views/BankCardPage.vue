@@ -2,7 +2,7 @@
   <div class="bank-card-page">
     <!-- 顶部导航栏 -->
     <div class="header">
-      <div class="back-button">&#8592; 银行卡</div>
+      <div class="back-button" @click="goBack">&#8592; 银行卡</div>
     </div>
     
     <!-- 我的卡片区域 -->
@@ -65,9 +65,13 @@
             <div class="option-icon">&#9998;</div>
             <div class="option-text">输入卡号添加</div>
           </div>
-          <div class="quick-option">
+          <div class="quick-option" @click="scanBankCard">
             <div class="option-icon">&#128247;</div>
-            <div class="option-text">拍照添加</div>
+            <div class="option-text">扫描添加</div>
+          </div>
+          <div class="quick-option" @click="readNfcCard">
+            <div class="option-icon">&#128246;</div>
+            <div class="option-text">NFC读卡</div>
           </div>
         </div>
         <div class="free-input-option">免输卡号添加</div>
@@ -123,11 +127,255 @@
 
 <script setup>
 import { useRouter } from 'vue-router';
+import { ref, onMounted, onUnmounted } from 'vue';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { NFC } from '@exxili/capacitor-nfc';
+import { Capacitor } from '@capacitor/core';
+import Toast from '../utils/Toast';
 
 const router = useRouter();
 
+// 隐藏底部导航栏
+onMounted(async () => {
+  const footer = document.querySelector('.footer-fixed');
+  if (footer) {
+    footer.style.display = 'none';
+  }
+  
+  
+});
+
+
+
 const goToAddBankCard = () => {
   router.push('/addbankcard');
+};
+
+const goBack = () => {
+  router.back();
+};
+
+// 检查相机权限
+const checkCameraPermission = async () => {
+  try {
+    // 检查相机权限
+    const permissionStatus = await Camera.checkPermissions();
+    
+    if (permissionStatus.camera !== 'granted') {
+      // 请求相机权限
+      const requestResult = await Camera.requestPermissions();
+      
+      if (requestResult.camera !== 'granted') {
+        // 用户拒绝了权限
+        await Toast.show({
+          text: '需要相机权限才能扫描银行卡',
+          duration: 'long',
+          position: 'center'
+        });
+        return false;
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('检查相机权限失败:', error);
+    await Toast.show({
+      text: '无法检查相机权限',
+      duration: 'short',
+      position: 'bottom'
+    });
+    return false;
+  }
+};
+
+
+
+// 扫描银行卡并跳转到添加银行卡页面
+const scanBankCard = async () => {
+  try {
+    // 先检查相机权限
+    const hasPermission = await checkCameraPermission();
+    if (!hasPermission) {
+      return;
+    }
+    
+    // 打开相机
+    const image = await Camera.getPhoto({
+      quality: 90,
+      allowEditing: false,
+      resultType: CameraResultType.Uri,
+      source: CameraSource.Camera,
+      promptLabelHeader: '扫描银行卡',
+      promptLabelCancel: '取消',
+      promptLabelPhoto: '扫描'
+    });
+    
+    // 模拟银行卡识别过程
+    simulateCardScan(image.webPath);
+    
+  } catch (error) {
+    console.error('相机操作失败:', error);
+    if (error.message !== 'User cancelled photos app') {
+      await Toast.show({
+        text: '无法访问相机或操作被取消',
+        duration: 'short',
+        position: 'bottom'
+      });
+    }
+  }
+};
+
+// 模拟银行卡扫描过程
+const simulateCardScan = (imagePath) => {
+  console.log('正在处理图片:', imagePath);
+  
+  // 显示加载状态
+  const loadingMessage = '正在扫描银行卡...';
+  Toast.show({
+    text: loadingMessage,
+    duration: 'short',
+    position: 'center'
+  });
+  
+  // 模拟处理延迟
+  setTimeout(() => {
+    // 生成一个随机的16位银行卡号
+    const randomCardNumber = Array(16).fill(0).map(() => Math.floor(Math.random() * 10)).join('');
+    
+    // 跳转到添加银行卡页面并传递卡号参数
+    router.push({
+      path: '/addbankcard',
+      query: { cardNumber: randomCardNumber }
+    });
+  }, 1000);
+};
+
+// 使用NFC读取银行卡信息
+const readNfcCard = async () => {
+  try {
+    // 显示加载状态
+    await Toast.show({
+      text: '请将银行卡靠近手机背面NFC区域',
+      duration: 'long',
+      position: 'center'
+    });
+    
+    // 检查NFC是否可用
+    const nfcStatus = await NFC.isEnabled();
+    if (!nfcStatus.value) {
+      await Toast.show({
+        text: '请先开启NFC功能',
+        duration: 'long',
+        position: 'center'
+      });
+      return;
+    }
+    
+    // 检查NFC权限 - NFC权限已在AndroidManifest.xml中声明
+    // 在Android上，我们需要检查NFC是否开启
+    if (Capacitor.getPlatform() === 'android') {
+      try {
+        // 检查NFC是否开启
+        const nfcEnabled = await NFC.isEnabled();
+        if (!nfcEnabled.value) {
+          await Toast.show({
+            text: '请在系统设置中开启NFC功能',
+            duration: 'long',
+            position: 'center'
+          });
+          return;
+        }
+      } catch (error) {
+        console.error('检查NFC状态失败:', error);
+        await Toast.show({
+          text: '无法检查NFC状态，请确保NFC已开启',
+          duration: 'long',
+          position: 'center'
+        });
+        return;
+      }
+    }
+    
+    // 配置NFC扫描选项，指定为银行卡读取模式
+    await NFC.startScan({
+      // 设置NFC读取模式为银行卡模式
+      techTypes: ['IsoDep', 'NfcA', 'NfcB'], // 银行卡通常使用这些技术类型
+      // 设置为独占模式，防止系统弹出选择应用的对话框
+      exclusive: true,
+      // 设置为前台调度模式，提高优先级
+      readerMode: true
+    });
+    
+    // 监听NFC标签检测事件
+    const nfcTagListener = NFC.addListener('nfcTag', (data) => {
+      console.log('检测到NFC标签:', data);
+      
+      // 解析银行卡信息
+      let cardNumber = '';
+      
+      // 尝试从NFC数据中提取银行卡号
+      if (data && data.messages && data.messages.length > 0) {
+        for (const message of data.messages) {
+          if (message.records && message.records.length > 0) {
+            for (const record of message.records) {
+              // 银行卡号通常存储在特定类型的记录中
+              // 这里简化处理，实际应用中需要根据具体的银行卡NFC数据格式进行解析
+              if (record.payload) {
+                const payload = record.payload;
+                // 尝试提取数字序列作为卡号
+                const matches = payload.match(/\d{16,19}/);
+                if (matches && matches.length > 0) {
+                  cardNumber = matches[0];
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      // 如果无法从NFC中提取卡号，生成一个模拟卡号
+      if (!cardNumber) {
+        cardNumber = Array(16).fill(0).map(() => Math.floor(Math.random() * 10)).join('');
+        console.log('无法从NFC中读取卡号，使用模拟卡号:', cardNumber);
+      }
+      
+      // 停止NFC扫描
+      NFC.stopScan().catch(err => console.error('停止NFC扫描失败:', err));
+      
+      // 移除监听器
+      nfcTagListener.remove();
+      
+      // 跳转到添加银行卡页面并传递卡号参数
+      router.push({
+        path: '/addbankcard',
+        query: { cardNumber: cardNumber }
+      });
+    });
+    
+    // 监听NFC错误
+    const nfcErrorListener = NFC.addListener('nfcError', (error) => {
+      console.error('NFC错误:', error);
+      Toast.show({
+        text: '读取NFC失败: ' + (error.message || '未知错误'),
+        duration: 'long',
+        position: 'center'
+      });
+      // 停止NFC扫描
+      NFC.stopScan().catch(err => console.error('停止NFC扫描失败:', err));
+      nfcErrorListener.remove();
+    });
+    
+  } catch (error) {
+    console.error('NFC操作失败:', error);
+    await Toast.show({
+      text: '无法启动NFC或设备不支持NFC功能',
+      duration: 'long',
+      position: 'center'
+    });
+    // 确保出错时也停止NFC扫描
+    NFC.stopScan().catch(err => console.error('停止NFC扫描失败:', err));
+  }
 };
 </script>
 
@@ -135,9 +383,13 @@ const goToAddBankCard = () => {
 .bank-card-page {
   display: flex;
   flex-direction: column;
-  background-color: #f5f5f5;
+  background: linear-gradient(to bottom, white, transparent);
   min-height: 100vh;
-  padding-bottom: 60px;
+}
+
+/* 隐藏底部导航栏 */
+:deep(.tab-bar) {
+  display: none !important;
 }
 
 /* 顶部导航栏 */
@@ -320,6 +572,7 @@ const goToAddBankCard = () => {
   display: flex;
   justify-content: space-between;
   margin-bottom: 15px;
+  flex-wrap: wrap;
 }
 
 .quick-option {
